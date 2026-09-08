@@ -50,4 +50,39 @@ RSpec.describe Lowkey do
       expect(Lowkey['Lowkey::ExtendModule'].first).to be_an_instance_of(Lowkey::FileProxy)
     end
   end
+
+  describe '.freeze_config!' do
+    after { Lowkey.instance_variable_set(:@config, nil) }
+
+    it 'freezes the config object' do
+      Lowkey.freeze_config!
+
+      expect(Lowkey.config).to be_frozen
+    end
+
+    it 'prevents further mutation via #configure' do
+      Lowkey.freeze_config!
+
+      expect { Lowkey.configure { |config| config.cache = false } }.to raise_error(FrozenError)
+    end
+  end
+
+  describe '.make_shareable!' do
+    # keys.clear on a frozen Hash raises FrozenError -- reset the ivar directly instead,
+    # so the outer `after { Lowkey.clear }` still has a fresh, unfrozen Hash to work with.
+    after { Lowkey.instance_variable_set(:@keys, nil) }
+
+    it 'makes the registry shareable across Ractors' do
+      Lowkey.load(file_path)
+
+      Lowkey.make_shareable!
+
+      ractor = Ractor.new do
+        Lowkey['spec/fixtures/extend_module.rb']
+      rescue StandardError => e
+        e
+      end
+      expect(ractor.take).to be_an_instance_of(Lowkey::FileProxy)
+    end
+  end
 end
