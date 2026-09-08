@@ -49,6 +49,30 @@ module Lowkey
       yield(config)
     end
 
+    # Freezes the config, making it shareable across Ractors (Class/Module instance
+    # variables can only be read from a non-main Ractor if their value is frozen).
+    # Call once, after all #configure calls, before spawning any worker Ractors --
+    # #configure can no longer mutate the config afterward, same as any other frozen
+    # object.
+    def freeze_config!
+      config.freeze
+    end
+
+    # Makes the whole file/class/method-proxy registry shareable across Ractors, so
+    # a class LowType has already redefined can be called from a worker Ractor.
+    # Call once boot is complete (every class that will ever call Lowkey.load has
+    # done so) and before spawning any worker Ractors -- the registry is read-only
+    # from that point on, same as any other frozen/shareable object.
+    #
+    # Raises Ractor::Error if anything in the registry isn't shareable even when
+    # deep-frozen (e.g. a live Binding, an IO, a Proc closing over local state).
+    # low_type's class_proxy.class_binding is cleared for exactly this reason --
+    # if you're calling this from a fresh registry with no other unshareable
+    # objects stored on a proxy, it should just work.
+    def make_shareable!
+      Ractor.make_shareable(keys)
+    end
+
     private
 
     def map_file_path(file_proxy:)
