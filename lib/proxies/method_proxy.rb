@@ -42,6 +42,13 @@ module Lowkey
       @params.any?(&:expression) || @return_proxy
     end
 
+    # Lazily memoized rather than computed in #initialize -- param_proxy.expression isn't
+    # populated yet at construction time (Lowkey.load builds these while parsing; the
+    # Evaluator only sets each param's #expression afterward, once the class body has
+    # finished loading), so computing this eagerly at construction would permanently bake
+    # in an empty result. Lowkey.make_shareable! warms this explicitly (calls it once for
+    # every method proxy in the registry) before freezing, since a lazy `||=` write would
+    # otherwise raise FrozenError the first time something calls this after the freeze.
     def params_with_expressions
       @params_with_expressions ||= @params.filter(&:expression)
     end

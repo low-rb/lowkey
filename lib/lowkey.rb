@@ -70,10 +70,26 @@ module Lowkey
     # if you're calling this from a fresh registry with no other unshareable
     # objects stored on a proxy, it should just work.
     def make_shareable!
+      warm_lazy_caches!
       Ractor.make_shareable(keys)
     end
 
     private
+
+    # MethodProxy#params_with_expressions is lazily memoized (computed on first call,
+    # not at construction) -- calling it for the first time *after* freezing would raise
+    # FrozenError trying to cache its result. Call it once for every method proxy in the
+    # registry now, while everything's still mutable, so the cached value already exists
+    # by the time Ractor.make_shareable freezes it.
+    def warm_lazy_caches!
+      keys.values.flatten.uniq.each do |file_proxy|
+        next unless file_proxy.is_a?(FileProxy)
+
+        file_proxy.definitions.each_value do |module_proxy|
+          module_proxy.keyed_methods.each_value(&:params_with_expressions)
+        end
+      end
+    end
 
     def map_file_path(file_proxy:)
       keys[file_proxy.file_path] = file_proxy
