@@ -42,7 +42,7 @@ module Lowkey
 
     def resolved_default
       if @expression
-        return nil if @expression.default_value == :LOW_TYPE_UNDEFINED
+        return nil if @expression.default_value == :LOWTYPE_UNDEFINED
         return nil if @expression.default_value.nil? && required?
 
         value = @expression.default_value
