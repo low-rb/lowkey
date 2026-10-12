@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 class VisibilityTest
   def public_greet
-    "hello"
+    'hello'
   end
 
   private
 
   def private_greet
-    "hello"
+    'hello'
   end
 end
