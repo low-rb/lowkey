@@ -11,17 +11,12 @@ Lowkey provides a central API for storing this metadata once and accessing it mu
 
 ## Usage
 
-Load a file:
-```ruby
-# Absolute path or path relative to the starting Ruby process.
-Lowkey.load('my_class.rb')
-```
-
-Access the resulting proxies:
 ```ruby
 Lowkey['my_class.rb'] # => FileProxy
 Lowkey['my_class.rb']['MyNamespace::MyClass'] # => ClassProxy
 ```
+
+The first key is either an absolute path or path relative to the starting Ruby process.
 
 ## Proxies
 
@@ -133,7 +128,13 @@ Lowkey.configure do |config|
   # A big benefit of Lowkey is its caching of abstract syntax trees, file proxies and class proxies.
   # But to save memory you should clear them after the "class load"/setup stage of your application.
   # Set to "false" or call "Lowkey.clear" after you no longer need Lowkey, such as in a boot script.
+  # References to particular proxies will still keep them in memory or call Lowkey.keep(file_proxy).
   config.cache = true
+
+  # Prism nodes use most of a cached file's memory, so they're released once a file loads.
+  # However you may be doing advanced AST manipulation like reading method calls or querying nodes.
+  # Set to "false" to keep AST nodes or keep per file: Lowkey.load(file_path, release_nodes: false).
+  config.release_nodes = true
 end
 ```
 
@@ -181,3 +182,7 @@ Add `gem 'lowkey'` to your Gemfile then:
 ```
 bundle install
 ```
+
+## Performance
+
+An app with 500 LowType files would spend about 0.25s of boot in lowkey.
