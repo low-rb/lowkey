@@ -5,14 +5,17 @@ require_relative '../interfaces/proxy'
 module Lowkey
   class ParamProxy < Proxy
     attr_reader :type, :position, :value
-    attr_accessor :expression
+    attr_accessor :default, :expression
 
-    def initialize(name:, source:, type:, position: nil, value: :LOWKEY_UNDEFINED, expression: nil) # rubocop:disable Metrics/ParameterLists
+    # @param value - The source of the param's value, such as "String | 'default'".
+    # @param default - The source of the default value within the value, such as "'default'". Can be overridden.
+    def initialize(name:, source:, type:, position: nil, value: :LOWKEY_UNDEFINED, default: nil, expression: nil) # rubocop:disable Metrics/ParameterLists
       super(name:, source:)
 
       @type = type
       @position = position
       @value = value
+      @default = default
 
       @expression = expression
     end
@@ -40,15 +43,12 @@ module Lowkey
       default.nil? ? @name.to_s : "#{@name} = #{default}"
     end
 
+    # Uses the source of the default value rather than the evaluated default value, to preserve the developer's code.
     def resolved_default
       if @expression
-        return nil if @expression.default_value == :LOWTYPE_UNDEFINED
-        return nil if @expression.default_value.nil? && required?
+        return nil if @expression.required?
 
-        value = @expression.default_value
-        return value.value.inspect if value.class.name == 'ValueExpression' # rubocop:disable Style/ClassEqualityComparison
-
-        return value.inspect
+        return @default
       end
 
       return nil if @value == :LOWKEY_UNDEFINED

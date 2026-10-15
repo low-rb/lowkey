@@ -7,14 +7,18 @@ module Lowkey
   class MethodProxy < Proxy
     include Query
 
-    attr_reader :params, :body, :return_proxy
+    attr_reader :params, :body, :return_proxy, :signature_end_line, :receiver
 
-    def initialize(name:, source:, param_proxies: [], body_proxy: nil, return_proxy: nil)
+    # @param receiver - The source of the receiver in "def receiver.method", such as "self".
+    def initialize(name:, source:, param_proxies: [], body_proxy: nil, return_proxy: nil, signature_end_line: nil, receiver: nil) # rubocop:disable Metrics/ParameterLists
       super(name:, source:)
 
+      @receiver = receiver
       @params = param_proxies
       @body = body_proxy
       @return_proxy = return_proxy
+      @signature_end_line = signature_end_line || source.start_line
+      @rewritten = false
 
       @named_params = name_params
       @tagged_params = tag_params
@@ -29,17 +33,26 @@ module Lowkey
       @tagged_params[tag] || []
     end
 
+    # Removes types from the signature, leaving the rest of the source as is. The amount of lines stays the same.
     def rewrite_signature
-      old_line = lines[start_index]
-      scope_prefix = old_line.match?(/def self\./) ? 'def self.' : 'def '
-      all_params = @params.map { |p| p.expression ? p.export(typed: false) : p.name.to_s }
-      return_suffix = @return_proxy ? " #{@return_proxy.export}" : ''
-      indent = old_line[/^\s*/]
-      lines[start_index] = "#{indent}#{scope_prefix}#{@name}(#{all_params.join(', ')})#{return_suffix}\n"
+      return if @rewritten
+
+      signature_range = start_index..(signature_end_line - 1)
+
+      edits = param_edits
+      edits << return_type_edit(signature: lines[signature_range].join.b) if @return_proxy&.expression
+
+      @source.rewrite_lines(range: signature_range, edits:)
+      @rewritten = true
+    end
+
+    # Whether the method is defined on its receiver, such as "def self.method", rather than on the current class.
+    def receiver?
+      !@receiver.nil?
     end
 
     def expressions?
-      @params.any?(&:expression) || @return_proxy
+      @params.any?(&:expression) || !@return_proxy&.expression.nil?
     end
 
     def params_with_expressions
@@ -47,6 +60,24 @@ module Lowkey
     end
 
     private
+
+    def param_edits
+      params_with_expressions.map do |param|
+        [param.start_offset - line_offset, param.end_offset - line_offset, param.export(typed: false)]
+      end
+    end
+
+    # Also removes the whitespace before the return type, or the whole line when the return type is on its own line.
+    def return_type_edit(signature:)
+      start_offset = @return_proxy.start_offset - line_offset
+      end_offset = @return_proxy.end_offset - line_offset
+      line_start_offset = start_offset - @return_proxy.start_column
+      before = signature.byteslice(line_start_offset, @return_proxy.start_column)
+
+      return [line_start_offset, end_offset + 1, ''] if before.strip.empty? && signature.byteslice(end_offset) == "\n"
+
+      [start_offset - before[/[ \t]*\z/].bytesize, end_offset, '']
+    end
 
     def name_params
       @params.each_with_object({}) do |param, named_params|

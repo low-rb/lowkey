@@ -32,7 +32,8 @@ RSpec.describe Lowkey do
       end
 
       it 'does not cache file proxy' do
-        expect(Lowkey['spec/fixtures/extend_module.rb']).to be_nil
+        file_proxy
+        expect(Lowkey.keys).not_to have_key('spec/fixtures/extend_module.rb')
       end
     end
   end
@@ -48,6 +49,30 @@ RSpec.describe Lowkey do
 
     it 'maps namespace to file proxies' do
       expect(Lowkey['Lowkey::ExtendModule'].first).to be_an_instance_of(Lowkey::FileProxy)
+    end
+
+    it 'returns the cached file proxy' do
+      expect(Lowkey[file_path]).to be(Lowkey[file_path])
+    end
+
+    context 'when the file is not loaded' do
+      let(:file_path) { 'spec/fixtures/mock_module.rb' }
+
+      before { Lowkey.clear }
+
+      it 'loads the file proxy on first access and caches it' do
+        expect(Lowkey).to receive(:load).with(file_path).once.and_call_original
+
+        file_proxy = Lowkey[file_path]
+
+        expect(file_proxy).to be_an_instance_of(Lowkey::FileProxy)
+        expect(Lowkey[file_path]).to be(file_proxy)
+      end
+    end
+
+    it 'does not load a namespace or a missing file' do
+      expect(Lowkey['Lowkey::Missing']).to be_nil
+      expect(Lowkey['spec/fixtures/missing.rb']).to be_nil
     end
   end
 end

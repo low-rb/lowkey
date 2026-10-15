@@ -38,20 +38,15 @@ RSpec.describe Lowkey::ClassProxy do
     end
   end
 
-  describe '#method_calls' do
+  describe '#method_call_nodes' do
     before do
-      class_proxy.method_calls = [
-        MockCallNode.new(:get),
-        MockCallNode.new(:get),
-        MockCallNode.new(:post),
-        MockCallNode.new(:delete)
-      ]
+      class_proxy.method_call_nodes.push(MockCallNode.new(:get), MockCallNode.new(:get), MockCallNode.new(:post), MockCallNode.new(:delete))
     end
 
-    subject(:method_calls) { class_proxy.method_calls }
+    subject(:method_call_nodes) { class_proxy.method_call_nodes }
 
-    it 'returns all method calls' do
-      expect(method_calls.count).to eq(4)
+    it 'returns all method call nodes' do
+      expect(method_call_nodes.count).to eq(4)
     end
   end
 end

@@ -12,7 +12,7 @@ module Lowkey
 
     def load # rubocop:disable Metrics/AbcSize
       # Type check return values.
-      @class_proxy.method_calls.each do |method_call_node|
+      @class_proxy.method_call_nodes.each do |method_call_node|
         next unless %i[get post patch put delete options].include?(method_call_node.name)
 
         arguments_node = method_call_node.compact_child_nodes.first
@@ -23,7 +23,7 @@ module Lowkey
         name = route
         source = SourceFactory.method_call_source(method_call_node:, arguments_node:, file_path:, lines:)
 
-        next unless (return_proxy = ProxyFactory.return_proxy(method_node: method_call_node, name:, source:))
+        next unless (return_proxy = ProxyFactory.return_proxy(method_node: method_call_node, name:, file_path:, lines:))
 
         param_proxies = [ParamProxy.new(source:, name:, type: :pos_req, position: 0)]
         method_proxy = MethodProxy.new(source:, name:, param_proxies:, return_proxy:)

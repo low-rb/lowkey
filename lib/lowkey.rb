@@ -9,13 +9,18 @@ require_relative 'visitors/visitor'
 require_relative 'proxies/file_proxy'
 
 module Lowkey
+  NAMESPACE_PATTERN = /\A[A-Z]\w*(::[A-Z]\w*)*\z/
+
   class << self
     def keys
       @keys ||= {}
     end
 
+    # A namespace returns its file proxies. A file path returns its file proxy, loading the file on first access.
     def [](key)
-      keys[key]
+      return keys[key] if keys.key?(key) || !file_path?(key)
+
+      load(key)
     end
 
     def load(file_path, cache: true)
@@ -50,6 +55,10 @@ module Lowkey
     end
 
     private
+
+    def file_path?(key)
+      key.is_a?(String) && !key.match?(NAMESPACE_PATTERN) && File.file?(key)
+    end
 
     def map_file_path(file_proxy:)
       keys[file_proxy.file_path] = file_proxy
