@@ -2,8 +2,12 @@
 
 module Lowkey
   class ParentMap
+    # The namespace of each node, cached by Query#namespace.
+    attr_reader :namespaces
+
     def initialize(root_node:)
       @parent_map = {}
+      @namespaces = {}
       @current_parent = nil
 
       map(root_node)
