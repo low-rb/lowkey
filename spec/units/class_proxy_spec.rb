@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require 'prism'
-require_relative '../../lib/models/source'
-require_relative '../../lib/proxies/class_proxy'
+require_relative '../../lib/lowkey'
 
 class MockCallNode
   attr_reader :name
@@ -38,15 +37,26 @@ RSpec.describe Lowkey::ClassProxy do
     end
   end
 
-  describe '#method_call_nodes' do
+  describe '#add_method_call' do
+    subject(:class_proxy) { described_class.new(node:, name: 'MockClass', namespace: 'Lowkey::MockClass', source:) }
+
+    let(:source) { Lowkey::Source.new(file_path: 'mock/path', scope: 'MockClass', lines: [], start_line: 1) }
+
     before do
-      class_proxy.method_call_nodes.push(MockCallNode.new(:get), MockCallNode.new(:get), MockCallNode.new(:post), MockCallNode.new(:delete))
+      %i[get get post delete].each { |name| class_proxy.add_method_call(node: MockCallNode.new(name)) }
     end
 
-    subject(:method_call_nodes) { class_proxy.method_call_nodes }
+    subject(:method_calls) { class_proxy.method_calls }
 
-    it 'returns all method call nodes' do
-      expect(method_call_nodes.count).to eq(4)
+    it 'adds method calls' do
+      expect(method_calls.map(&:name)).to eq(%i[get get post delete])
+    end
+
+    it 'adds method calls after method calls are built' do
+      method_calls
+      class_proxy.add_method_call(node: MockCallNode.new(:put))
+
+      expect(class_proxy.method_calls.map(&:name)).to eq(%i[get get post delete put])
     end
   end
 end

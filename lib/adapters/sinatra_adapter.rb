@@ -12,8 +12,10 @@ module Lowkey
 
     def load # rubocop:disable Metrics/AbcSize
       # Type check return values.
-      @class_proxy.method_call_nodes.each do |method_call_node|
-        next unless %i[get post patch put delete options].include?(method_call_node.name)
+      @class_proxy.method_calls.each do |method_call|
+        next unless %i[get post patch put delete options].include?(method_call.name)
+
+        method_call_node = method_call.node
 
         arguments_node = method_call_node.compact_child_nodes.first
         next unless arguments_node.is_a?(Prism::ArgumentsNode)

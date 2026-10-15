@@ -15,7 +15,7 @@ module Lowkey
       namespace = namespace(node:, parent_map:) || return
       module_proxy = file_proxy[namespace]
 
-      module_proxy.method_call_nodes << node
+      module_proxy.add_method_call(node:)
       upsert_dependency(node:, namespace:)
 
       return unless node.name == :private && node.respond_to?(:start_line) && module_proxy.start_line && module_proxy.end_line

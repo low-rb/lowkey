@@ -14,13 +14,18 @@ RSpec.describe Lowkey::MethodCallProxy do
   describe 'ModuleProxy#method_calls' do
     let(:module_proxy) { file_proxy['Lowkey::MethodCalls'] }
 
-    it 'builds method call proxies on first access' do
-      expect(Lowkey::ProxyFactory).not_to receive(:method_call_proxy)
-      module_proxy
+    it 'builds method call proxies for classes on load for adapters' do
+      expect(module_proxy.instance_variable_get(:@method_calls)).not_to be_nil
+    end
+
+    it 'builds method call proxies for modules on first access' do
+      expect(file_proxy['Object'].instance_variable_get(:@method_calls)).to be_nil
+      expect(file_proxy['Object'].method_calls.map(&:name)).to eq([:require])
     end
 
     it 'builds a method call proxy for each method call node' do
-      expect(module_proxy.method_calls.map(&:node)).to eq(module_proxy.method_call_nodes)
+      expect(module_proxy.method_calls.map(&:node)).to all(be_a(Prism::CallNode))
+      expect(module_proxy.method_calls.map(&:name)).to include(:include, :attribute, :attr_reader, :type)
     end
 
     it 'returns the same method call proxies' do

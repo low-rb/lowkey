@@ -7,7 +7,7 @@ module Lowkey
   class ModuleProxy < Proxy
     include Query
 
-    attr_reader :namespace, :method_call_nodes
+    attr_reader :namespace
     attr_accessor :private_start_line, :keyed_methods, :class_methods
 
     def initialize(node:, name:, namespace:, source:)
@@ -25,9 +25,14 @@ module Lowkey
       @method_calls = nil
     end
 
-    # Method call proxies are lazy loaded and may not always be needed. Sinatra adapter accesses Prism's method call nodes directly.
+    # Method call proxies are lazy loaded and may not always be needed.
     def method_calls
-      @method_calls ||= @method_call_nodes.map { |call_node| ProxyFactory.method_call_proxy(call_node:, file_path:, lines:) }
+      @method_calls ||= @method_call_nodes.map { |call_node| method_call_proxy(call_node:) }
+    end
+
+    def add_method_call(node:)
+      @method_call_nodes << node
+      @method_calls << method_call_proxy(call_node: node) if @method_calls
     end
 
     def [](key)
@@ -90,6 +95,12 @@ module Lowkey
       def module_node?(node)
         node.is_a?(::Prism::ClassNode) || node.is_a?(::Prism::ModuleNode)
       end
+    end
+
+    private
+
+    def method_call_proxy(call_node:)
+      ProxyFactory.method_call_proxy(call_node:, file_path:, lines:)
     end
   end
 end
