@@ -23,7 +23,7 @@ module Lowkey
       load(key)
     end
 
-    def load(file_path, cache: true)
+    def load(file_path, cache: true, release_nodes: config.release_nodes)
       root_node = Prism.parse(File.read(file_path), filepath: file_path).value
       file_proxy = ProxyFactory.file_proxy(root_node:, file_path:)
 
@@ -38,16 +38,35 @@ module Lowkey
         map_definitions(file_proxy:)
       end
 
+      file_proxy.release_nodes if release_nodes
       file_proxy
     end
 
-    def clear
-      keys.clear
+    def kept
+      @kept ||= Set.new
+    end
+
+    # Keeps a file proxy in the cache when it's cleared, for gems that look it up after the app has loaded.
+    def keep(file_proxy)
+      kept << file_proxy
+    end
+
+    # Clears cached file proxies to save memory, such as in a boot file once an app has loaded.
+    # Kept file proxies stay along with their namespaces, unless "keep" is false.
+    def clear(keep: true)
+      kept.clear unless keep
+
+      keys.select! do |_key, value|
+        next kept.include?(value) unless value.is_a?(Array)
+
+        value.select! { |file_proxy| kept.include?(file_proxy) }
+        !value.empty?
+      end
     end
 
     def config
-      config = Struct.new(:cache)
-      @config ||= config.new(true)
+      config = Struct.new(:cache, :release_nodes)
+      @config ||= config.new(true, true)
     end
 
     def configure

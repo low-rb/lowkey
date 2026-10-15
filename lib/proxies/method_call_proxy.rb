@@ -2,12 +2,13 @@
 
 require_relative '../factories/source_factory'
 require_relative '../interfaces/proxy'
+require_relative '../interfaces/releasable_node'
 
 module Lowkey
   # A method call like "include Module", "attr_reader :name" or "type(String | 'default')".
   # Details, including the source, are read from the node on first access as consumers often only need a few method calls.
   class MethodCallProxy < Proxy
-    attr_reader :node
+    include ReleasableNode
 
     def initialize(name:, node:, file_path:, lines:)
       super(name:, source: nil)
@@ -18,15 +19,18 @@ module Lowkey
       @rewritten = false
     end
 
+    # The file path and lines don't need the node, so they're still available once nodes are released.
+    attr_reader :file_path, :lines
+
     def source
-      @source ||= SourceFactory.call_source(call_node: @node, file_path: @file_path, lines: @lines)
+      @source ||= SourceFactory.call_source(call_node: node, file_path: @file_path, lines: @lines)
     end
 
     # The source of the receiver in "receiver.method", such as "self".
     def receiver
       return @receiver if defined?(@receiver)
 
-      @receiver = @node.receiver&.slice
+      @receiver = node.receiver&.slice
     end
 
     def receiver?
@@ -78,7 +82,7 @@ module Lowkey
     private
 
     def argument_nodes
-      @node.arguments&.arguments || []
+      node.arguments&.arguments || []
     end
 
     def own_lines?

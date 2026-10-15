@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require_relative '../interfaces/proxy'
+require_relative '../interfaces/releasable_node'
 require_relative '../queries/query'
 
 module Lowkey
   class ModuleProxy < Proxy
     include Query
+    include ReleasableNode
 
     attr_reader :namespace
     attr_accessor :private_start_line, :keyed_methods, :class_methods
@@ -27,7 +29,7 @@ module Lowkey
 
     # Method call proxies are lazy loaded and may not always be needed.
     def method_calls
-      @method_calls ||= @method_call_nodes.map { |call_node| method_call_proxy(call_node:) }
+      @method_calls ||= method_call_nodes.map { |call_node| method_call_proxy(call_node:) }
     end
 
     def add_method_call(node:)
@@ -36,7 +38,15 @@ module Lowkey
     end
 
     def [](key)
-      key.start_with?('.') ? query(node: @node, namespace: nil, name: key.delete_prefix('.')) : @keyed_methods[key]
+      key.start_with?('.') ? query(node:, namespace: nil, name: key.delete_prefix('.')) : @keyed_methods[key]
+    end
+
+    # Also releases the nodes of its methods and method calls.
+    def release_nodes
+      release_node
+      @method_call_nodes = nil
+      @method_calls&.each(&:release_node)
+      method_proxies.each(&:release_node)
     end
 
     class << self
@@ -98,6 +108,17 @@ module Lowkey
     end
 
     private
+
+    # Method proxies with the same name share a key in "keyed_methods", so instance and class methods are included.
+    def method_proxies
+      [*@keyed_methods.values, *@class_methods.values, *(instance_methods.values if respond_to?(:instance_methods))].uniq
+    end
+
+    def method_call_nodes
+      raise ReleasedNodeError if @method_call_nodes.nil?
+
+      @method_call_nodes
+    end
 
     def method_call_proxy(call_node:)
       ProxyFactory.method_call_proxy(call_node:, file_path:, lines:)

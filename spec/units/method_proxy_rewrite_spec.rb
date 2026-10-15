@@ -77,4 +77,14 @@ RSpec.describe Lowkey::MethodProxy do
       expect(file_proxy.export).to include("def own_line_return_type(one)\n      one\n")
     end
   end
+
+  describe '#[]' do
+    it 'queries the method node' do
+      expect(class_proxy[:multiline]['.two']).to be_a(Prism::OptionalKeywordParameterNode)
+    end
+
+    it 'returns a param proxy' do
+      expect(class_proxy[:multiline][:two]).to be_a(Lowkey::ParamProxy)
+    end
+  end
 end

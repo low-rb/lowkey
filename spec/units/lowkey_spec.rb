@@ -7,7 +7,7 @@ RSpec.describe Lowkey do
   let(:file_path) { 'spec/fixtures/extend_module.rb' }
 
   after do
-    Lowkey.clear
+    Lowkey.clear(keep: false)
   end
 
   describe '.load' do
@@ -73,6 +73,34 @@ RSpec.describe Lowkey do
     it 'does not load a namespace or a missing file' do
       expect(Lowkey['Lowkey::Missing']).to be_nil
       expect(Lowkey['spec/fixtures/missing.rb']).to be_nil
+    end
+  end
+
+  describe '.clear' do
+    let(:kept_path) { 'spec/fixtures/extend_module.rb' }
+    let(:cleared_path) { 'spec/fixtures/mock_module.rb' }
+
+    before do
+      Lowkey.keep(Lowkey[kept_path])
+      Lowkey.load(cleared_path)
+      Lowkey.clear
+    end
+
+    it 'keeps file proxies and their namespaces' do
+      expect(Lowkey.keys).to have_key(kept_path)
+      expect(Lowkey.keys['Lowkey::ExtendModule']).to all(be_an_instance_of(Lowkey::FileProxy))
+    end
+
+    it 'clears file proxies that are not kept' do
+      expect(Lowkey.keys).not_to have_key(cleared_path)
+      expect(Lowkey.keys.values.flatten).to all(satisfy { |file_proxy| Lowkey.kept.include?(file_proxy) })
+    end
+
+    it 'clears everything when not keeping file proxies' do
+      Lowkey.clear(keep: false)
+
+      expect(Lowkey.keys).to be_empty
+      expect(Lowkey.kept).to be_empty
     end
   end
 end

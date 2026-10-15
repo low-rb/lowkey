@@ -1,18 +1,23 @@
 # frozen_string_literal: true
 
 require_relative '../interfaces/proxy'
+require_relative '../interfaces/releasable_node'
 require_relative '../queries/query'
 
 module Lowkey
   class MethodProxy < Proxy
     include Query
+    include ReleasableNode
 
     attr_reader :params, :body, :return_proxy, :signature_end_line, :receiver
 
     # @param receiver - The source of the receiver in "def receiver.method", such as "self".
-    def initialize(name:, source:, param_proxies: [], body_proxy: nil, return_proxy: nil, signature_end_line: nil, receiver: nil) # rubocop:disable Metrics/ParameterLists
+    # @param node - The method's node, which is released once its file loads.
+    def initialize(name:, source:, param_proxies: [], body_proxy: nil, return_proxy: nil, signature_end_line: nil, receiver: nil, # rubocop:disable Metrics/ParameterLists
+                   node: nil)
       super(name:, source:)
 
+      @node = node
       @receiver = receiver
       @params = param_proxies
       @body = body_proxy
@@ -24,9 +29,11 @@ module Lowkey
       @tagged_params = tag_params
     end
 
+    # Methods built from method calls, like Sinatra routes, have no method node to query.
     def [](key)
-      # TODO: Initialize method proxy with method node and support query code path.
-      key.start_with?('.') ? query(node: @node, namespace: nil, name: key.delete_prefix('.')) : @named_params[key]
+      return @named_params[key] unless key.start_with?('.')
+
+      query(node:, namespace: nil, name: key.delete_prefix('.')) if node
     end
 
     def tagged_params(tag)

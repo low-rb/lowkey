@@ -42,7 +42,7 @@ module Lowkey
         signature_end_line = signature_end_node(method_node:, return_proxy:)&.end_line || method_node.start_line
 
         MethodProxy.new(name:, source: method_source, param_proxies:, body_proxy:, return_proxy:, signature_end_line:,
-                        receiver: method_node.receiver&.slice)
+                        receiver: method_node.receiver&.slice, node: method_node)
       end
 
       def method_call_proxy(call_node:, file_path:, lines:)

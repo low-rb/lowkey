@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+require_relative '../../lib/lowkey'
+
+# Most specs inspect Prism nodes after loading a file, which are released by default. See "release_nodes_spec.rb".
+Lowkey.configure { |config| config.release_nodes = false }
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = '.rspec_status'
