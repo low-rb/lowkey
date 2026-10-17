@@ -34,7 +34,7 @@ module Lowkey
         # TODO: Brittle conditional. What we really want to identify is if the method/rest of file was able to be parsed into an AST.
         end_line = end_line_from_indent(method_node:, lines:) if end_line >= lines.count
 
-        Source.new(file_path:, scope:, lines:, start_line:, end_line:)
+        Source.new(file_path:, scope:, lines:, start_line:, end_line:, location: method_node.location)
       end
 
       def param_source(param_node:, file_path:, lines:)
@@ -42,7 +42,14 @@ module Lowkey
         start_line = param_node.start_line
         end_line = param_node.end_line
 
-        Source.new(file_path:, scope:, lines:, start_line:, end_line:)
+        Source.new(file_path:, scope:, lines:, start_line:, end_line:, location: param_node.location)
+      end
+
+      def return_source(return_node:, scope:, file_path:, lines:)
+        start_line = return_node.start_line
+        end_line = return_node.end_line
+
+        Source.new(file_path:, scope:, lines:, start_line:, end_line:, location: return_node.location)
       end
 
       def body_source(method_source:)
@@ -51,6 +58,11 @@ module Lowkey
         end_line = method_source.end_line - 1
 
         Source.new(file_path: method_source.file_path, scope: method_source.scope, lines: method_source.lines, start_line:, end_line:)
+      end
+
+      def call_source(call_node:, file_path:, lines:)
+        Source.new(file_path:, scope: call_node.name, lines:, start_line: call_node.start_line, end_line: call_node.end_line,
+                   location: call_node.location)
       end
 
       def method_call_source(method_call_node:, arguments_node:, file_path:, lines:)

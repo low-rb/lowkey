@@ -21,26 +21,25 @@ RSpec.describe Lowkey::ParamProxy do
       end
     end
 
-    context 'typed: false with a ValueExpression default' do
-      # Simulates a LowType::ValueExpression without requiring LowType to be loaded.
-      let(:value_expression) do
-        Struct.new(:value) { def class() = Struct.new(:name) {}.new('ValueExpression') }.new('hello')
-      end
+    context 'typed: false with an expression' do
+      let(:mock_expression) { double('expression', required?: false) }
 
-      let(:mock_expression) do
-        double('expression', default_value: value_expression, required?: false)
-      end
-
-      it 'unwraps ValueExpression and uses .value as the default for positional param' do
+      it 'uses the source of the default value for positional param' do
         param = method_proxy[:two]
         param.expression = mock_expression
-        expect(param.export(typed: false)).to eq('two = "hello"')
+        expect(param.export(typed: false)).to eq("two = 'mock value'")
       end
 
-      it 'unwraps ValueExpression and uses .value as the default for keyword param' do
+      it 'uses the source of the default value for keyword param' do
         param = method_proxy[:four]
         param.expression = mock_expression
-        expect(param.export(typed: false)).to eq('four: "hello"')
+        expect(param.export(typed: false)).to eq("four: 'mock value'")
+      end
+
+      it 'has no default value when the expression is required' do
+        param = method_proxy[:two]
+        param.expression = double('expression', required?: true)
+        expect(param.export(typed: false)).to eq('two')
       end
     end
 

@@ -10,6 +10,21 @@ module Lowkey
       goodbye
     end
 
+    def ClassMethods.named_class_method = 'goodbye' # rubocop:disable Style/ClassMethods
+
+    def (Lowkey::ClassMethods).namespaced_class_method = 'goodbye'
+
+    OBJECT = Object.new
+    def OBJECT.object_method = 'goodbye'
+
+    class << OBJECT
+      def object_singleton_class_method = 'goodbye'
+    end
+
+    class << ClassMethods
+      def named_singleton_class_method = 'goodbye'
+    end
+
     class << self
       def class_method_with_arg(goodbye)
         goodbye
