@@ -27,6 +27,7 @@ Minor features that don't break backwards compatibility are released as patches.
 - `MethodCallProxy` for method calls, with `node`, `arguments`, `keywords`, `default`, `rewrite(text)` and `remove`. Details and the source are read from the node on first access
 - `ModuleProxy#method_calls` builds method call proxies on first access, and `ModuleProxy#add_method_call` adds a method call node
 - `Source#rewrite_lines` to edit lines without changing the amount of lines
+- `Lowkey::ValueParser` reads values like `nil`, `'text'`, `3` and `:symbol` from text or Prism nodes without evaluating code
 
 ### Fixed
 

@@ -7,6 +7,7 @@ require_relative 'factories/proxy_factory'
 require_relative 'maps/parent_map'
 require_relative 'visitors/visitor'
 require_relative 'proxies/file_proxy'
+require_relative 'queries/value_parser'
 
 module Lowkey
   NAMESPACE_PATTERN = /\A[A-Z]\w*(::[A-Z]\w*)*\z/

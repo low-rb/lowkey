@@ -57,6 +57,18 @@ class_proxy['.my_method'] # => MethodDefNode
 
 ℹ️ Query keypaths contain dots "`.`" and return nodes. They target the `name` attribute of nodes.
 
+### Value Parsing
+
+`Lowkey::ValueParser` reads Ruby values like `nil`, `true`, `'text'`, `3`, `-1.5` or `:symbol` from text or Prism nodes, without evaluating dangerous code. If the code is not a value then it will yield a block:
+
+```ruby
+Lowkey::ValueParser.parse("'it\\'s'") { nil } # => "it's"
+Lowkey::ValueParser.parse('page.title') { |text| fallback(text) } # => fallback's result
+
+Lowkey::ValueParser.value?(node) # => true for a value node
+Lowkey::ValueParser.value(node) { raise 'Not a value' }
+```
+
 ## Mutations
 
 You can mutate a file using either Proxies or Queries:
