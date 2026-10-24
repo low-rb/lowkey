@@ -4,6 +4,9 @@ require 'prism'
 
 module Lowkey
   module Query
+    # Prism 2 renamed MissingNode to ErrorRecoveryNode.
+    MISSING_NODE = defined?(Prism::ErrorRecoveryNode) ? Prism::ErrorRecoveryNode : Prism::MissingNode
+
     # TODO: Make name a keypath.
     def query(node:, namespace:, name:) # rubocop:disable Lint/UnusedMethodArgument
       node.breadth_first_search do |n|
@@ -30,7 +33,7 @@ module Lowkey
 
     def resolve_namespace_path(node:, parent_map:)
       # When inside RBX, Prism thinks we're defining a class because of "<".
-      return nil if node.respond_to?(:constant_path) && node.constant_path.is_a?(Prism::MissingNode)
+      return nil if node.respond_to?(:constant_path) && node.constant_path.is_a?(MISSING_NODE)
       return '' if (parent = parent_map[node]).nil?
 
       path = namespace_path(node: parent, parent_map:)
