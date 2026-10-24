@@ -7,7 +7,7 @@ Prism is amazing and opens up new ways to access metadata in Ruby. However:
 - We need higher level abstractions such as classes and methods
 - Navigating the AST can be difficult
 
-Lowkey provides a central API for storing this metadata once and accessing it multiple times. It's the secret sauce 🌶️ behind [LowType](https://github.com/low-rb/low_type), [LowLoad](https://github.com/low-rb/low_load) and [Raindeer](https://github.com/raindeer-rb/raindeer) in general.
+Lowkey provides a central API for storing this metadata once and accessing it multiple times. It's the secret sauce 🌶️ behind [LowType](https://github.com/low-rb/lowtype), [Dirload](https://github.com/low-rb/dirload) and [Raindeer](https://github.com/raindeer-rb/raindeer) in general.
 
 ## Usage
 
