@@ -21,8 +21,9 @@ RSpec.describe 'Loading Prism' do
     expect(prism_loaded_after("Lowkey::ValueParser.parse('title') { nil }")).to eq('not loaded')
   end
 
-  it 'loads to parse a value' do
-    expect(prism_loaded_after("raise unless Lowkey::ValueParser.parse(\"'notes'\") == 'notes'")).to eq('loaded')
+  it 'does not load to parse a value' do
+    expect(prism_loaded_after("raise unless Lowkey::ValueParser.parse(\"'notes'\") == 'notes'")).to eq('not loaded')
+    expect(prism_loaded_after("raise unless Lowkey::ValueParser.parse(%q('it\\\\'s')) == %q(it's)")).to eq('not loaded')
   end
 
   it 'loads to parse a file' do

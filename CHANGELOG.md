@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Minor features that don't break backwards compatibility are released as patches.
 
+## Unreleased
+
+### Changed
+
+- Read values like `'notes'`, `30`, `-1.5`, `true` and `:x` without Prism, so parsing one never loads it
+- Load Lowkey's proxies, factories and adapters when first used, so requiring it to read values loads only ValueParser
+
 ## 0.7.2
 
 ### Changed
