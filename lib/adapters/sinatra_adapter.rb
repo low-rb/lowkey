@@ -20,7 +20,11 @@ module Lowkey
         arguments_node = method_call_node.compact_child_nodes.first
         next unless arguments_node.is_a?(Prism::ArgumentsNode)
 
-        pattern = arguments_node.arguments.first.content
+        # A route's pattern is a string or regex, so calls like Net::HTTP.get(uri) aren't routes.
+        pattern_node = arguments_node.arguments.first
+        next unless pattern_node.respond_to?(:content)
+
+        pattern = pattern_node.content
         route = "#{method_call_node.name.upcase} #{pattern}"
         name = route
         source = SourceFactory.method_call_source(method_call_node:, arguments_node:, file_path:, lines:)
