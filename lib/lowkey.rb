@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
-require 'prism'
-
 require_relative 'adapters/adapter_loader'
 require_relative 'factories/proxy_factory'
 require_relative 'maps/parent_map'
-require_relative 'visitors/visitor'
 require_relative 'proxies/file_proxy'
 require_relative 'queries/value_parser'
 
@@ -25,6 +22,7 @@ module Lowkey
     end
 
     def load(file_path, cache: true, release_nodes: config.release_nodes)
+      load_prism
       root_node = Prism.parse(File.read(file_path), filepath: file_path).value
       file_proxy = ProxyFactory.file_proxy(root_node:, file_path:)
 
@@ -41,6 +39,15 @@ module Lowkey
 
       file_proxy.release_nodes if release_nodes
       file_proxy
+    end
+
+    # Prism takes a while to load, so it's loaded when a file or value is first parsed rather than with Lowkey.
+    def load_prism
+      return if @prism_loaded
+
+      require 'prism'
+      require_relative 'visitors/visitor' # A Prism::Visitor.
+      @prism_loaded = true
     end
 
     def kept

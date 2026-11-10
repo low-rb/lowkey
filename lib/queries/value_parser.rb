@@ -1,21 +1,9 @@
 # frozen_string_literal: true
 
-require 'prism'
-
 module Lowkey
   # Reads Ruby values like nil, true, 'text', 3, -1.5 or :symbol from Prism nodes or text, without evaluating any code.
   # Ignores potentially malicious values like variables, method calls or interpolated strings.
   module ValueParser
-    VALUE_NODES = [
-      Prism::NilNode,
-      Prism::TrueNode,
-      Prism::FalseNode,
-      Prism::IntegerNode,
-      Prism::FloatNode,
-      Prism::StringNode,
-      Prism::SymbolNode
-    ].freeze
-
     VALUE_KEYWORDS = %w[nil true false].freeze
     VALUE_STARTS = ["'", '"', ':', '-', *'0'..'9'].freeze
 
@@ -25,6 +13,7 @@ module Lowkey
     def parse(input)
       return yield(input) unless possible_value?(input)
 
+      Lowkey.load_prism
       result = Prism.parse(input)
       statements = result.value.statements.body
       return yield(input) unless result.errors.empty? && statements.one? && value?(statements.first)
@@ -38,7 +27,20 @@ module Lowkey
     end
 
     def value?(node)
-      VALUE_NODES.include?(node.class)
+      value_nodes.include?(node.class)
+    end
+
+    # Prism's value nodes, once Prism has loaded.
+    def value_nodes
+      @value_nodes ||= [
+        Prism::NilNode,
+        Prism::TrueNode,
+        Prism::FalseNode,
+        Prism::IntegerNode,
+        Prism::FloatNode,
+        Prism::StringNode,
+        Prism::SymbolNode
+      ].freeze
     end
 
     # Returns the AST node's value or yields a block.

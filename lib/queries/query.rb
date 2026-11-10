@@ -1,12 +1,7 @@
 # frozen_string_literal: true
 
-require 'prism'
-
 module Lowkey
   module Query
-    # Prism 2 renamed MissingNode to ErrorRecoveryNode.
-    MISSING_NODE = defined?(Prism::ErrorRecoveryNode) ? Prism::ErrorRecoveryNode : Prism::MissingNode
-
     # TODO: Make name a keypath.
     def query(node:, namespace:, name:) # rubocop:disable Lint/UnusedMethodArgument
       node.breadth_first_search do |n|
@@ -33,7 +28,7 @@ module Lowkey
 
     def resolve_namespace_path(node:, parent_map:)
       # When inside RBX, Prism thinks we're defining a class because of "<".
-      return nil if node.respond_to?(:constant_path) && node.constant_path.is_a?(MISSING_NODE)
+      return nil if node.respond_to?(:constant_path) && node.constant_path.is_a?(missing_node)
       return '' if (parent = parent_map[node]).nil?
 
       path = namespace_path(node: parent, parent_map:)
@@ -41,6 +36,11 @@ module Lowkey
 
       name = node.constant_path.name.to_s
       (path.empty? ? name : "#{path}::#{name}").freeze
+    end
+
+    # Prism 2 renamed MissingNode to ErrorRecoveryNode. A method so Prism isn't needed until a file is parsed.
+    def missing_node
+      defined?(Prism::ErrorRecoveryNode) ? Prism::ErrorRecoveryNode : Prism::MissingNode
     end
   end
 end

@@ -7,6 +7,10 @@ Minor features that don't break backwards compatibility are released as patches.
 
 ## Unreleased
 
+### Changed
+
+- Delay loading Prism until a file or value is first parsed
+
 ### Fixed
 
 - Calls named like Sinatra routes without a route pattern, like `Net::HTTP.get(uri)`, raised a NoMethodError
