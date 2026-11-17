@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
-require_relative 'adapters/adapter_loader'
-require_relative 'factories/proxy_factory'
-require_relative 'maps/parent_map'
-require_relative 'proxies/file_proxy'
 require_relative 'queries/value_parser'
 
 module Lowkey
+  # Loaded when first used, so reading values, like Antlers' templates do, loads only ValueParser.
+  { AdapterLoader: 'adapters/adapter_loader', SinatraAdapter: 'adapters/sinatra_adapter',
+    ProxyFactory: 'factories/proxy_factory', SourceFactory: 'factories/source_factory', Adapter: 'interfaces/adapter',
+    Proxy: 'interfaces/proxy', ReleasableNode: 'interfaces/releasable_node', ReleasedNodeError: 'interfaces/releasable_node',
+    ParentMap: 'maps/parent_map', Source: 'models/source', WriteError: 'models/source', BodyProxy: 'proxies/body_proxy',
+    ClassProxy: 'proxies/class_proxy', FileProxy: 'proxies/file_proxy', MethodCallProxy: 'proxies/method_call_proxy',
+    MethodProxy: 'proxies/method_proxy', ModuleProxy: 'proxies/module_proxy', ParamProxy: 'proxies/param_proxy',
+    ReturnProxy: 'proxies/return_proxy', Query: 'queries/query' }.each { |name, path| autoload(name, File.join(__dir__, path)) }
+
   NAMESPACE_PATTERN = /\A[A-Z]\w*(::[A-Z]\w*)*\z/
 
   class << self
