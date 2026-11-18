@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Minor features that don't break backwards compatibility are released as patches.
 
+## Unreleased
+
+### Fixed
+
+- End a method that Prism couldn't parse, like an RBX template, at the `end` lined up with its `def`. Prism guessed its end and could run on into the methods below, such as when `</div>` started a regex that ended in a later string
+
 ## 0.7.3
 
 ### Changed

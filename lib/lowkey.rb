@@ -28,8 +28,9 @@ module Lowkey
 
     def load(file_path, cache: true, release_nodes: config.release_nodes)
       load_prism
-      root_node = Prism.parse(File.read(file_path), filepath: file_path).value
-      file_proxy = ProxyFactory.file_proxy(root_node:, file_path:)
+      result = Prism.parse(File.read(file_path), filepath: file_path)
+      root_node = result.value
+      file_proxy = ProxyFactory.file_proxy(result:, file_path:)
 
       parent_map = ParentMap.new(root_node:)
       visitor = Visitor.new(file_proxy:, parent_map:)

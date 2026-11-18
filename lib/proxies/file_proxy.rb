@@ -10,11 +10,14 @@ module Lowkey
     include Query
 
     attr_accessor :definitions, :dependencies
+    attr_reader :error_lines
 
-    def initialize(root_node:, source:)
+    # Error lines are where Prism couldn't parse the file, like a template's lines in an RBX file.
+    def initialize(root_node:, source:, error_lines: [])
       super(name: nil, source:)
 
       @root_node = root_node
+      @error_lines = error_lines
 
       @definitions = {}
       @dependencies = Set.new
