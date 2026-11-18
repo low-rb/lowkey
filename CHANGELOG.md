@@ -9,7 +9,7 @@ Minor features that don't break backwards compatibility are released as patches.
 
 ### Fixed
 
-- End a method that Prism couldn't parse, like an RBX template, at the `end` lined up with its `def`. Prism guessed its end and could run on into the methods below, such as when `</div>` started a regex that ended in a later string
+- Parse a file again with the methods Prism couldn't parse masked, like an RBX file's templates, so the methods below them are found. Prism guessed where those methods end and could run on into the rest of the file, such as when `</div>` started a regex that ended in a later string. The template's bytes become spaces, so lines, columns and offsets still point at the file
 
 ## 0.7.3
 

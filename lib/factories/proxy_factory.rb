@@ -14,9 +14,9 @@ require_relative '../proxies/return_proxy'
 module Lowkey
   class ProxyFactory
     class << self
-      def file_proxy(result:, file_path:)
-        source = SourceFactory.file_source(root_node: result.value, file_path:)
-        FileProxy.new(root_node: result.value, source:, error_lines: result.errors.map { it.location.start_line })
+      def file_proxy(root_node:, file_path:, lines:)
+        source = SourceFactory.file_source(root_node:, file_path:, lines:)
+        FileProxy.new(root_node:, source:)
       end
 
       def module_proxy(node:, namespace:, file_path:, lines:)

@@ -5,10 +5,11 @@ require_relative '../models/source'
 module Lowkey
   class SourceFactory
     class << self
-      def file_source(root_node:, file_path:)
+      # The lines are the file's own, as Prism may have parsed it with its templates masked.
+      def file_source(root_node:, file_path:, lines:)
         end_line = root_node.respond_to?(:end_line) ? root_node.end_line : nil # TODO: Get file line count.
 
-        Source.new(file_path:, scope: 'file', lines: root_node.script_lines, start_line: 1, end_line:)
+        Source.new(file_path:, scope: 'file', lines:, start_line: 1, end_line:)
       end
 
       def module_source(node:, namespace:, file_path:, lines:)
@@ -27,14 +28,12 @@ module Lowkey
         Source.new(file_path:, scope: node.name, lines:, start_line:, end_line:)
       end
 
-      # Prism guesses where a method it couldn't parse ends, like one holding a template, and can run on past it into the
-      # methods below. So a method with an error in it, or that runs to the end of the file, ends at its lined up "end".
       def method_source(method_node:, file_proxy:)
         lines = file_proxy.lines
         start_line = method_node.start_line
         end_line = method_node.end_line
-        unparsed = file_proxy.error_lines.any? { |line| line.between?(start_line, end_line) }
-        end_line = end_line_from_indent(method_node:, lines:) if unparsed || end_line >= lines.count
+        # TODO: Brittle conditional. What we really want to identify is if the method/rest of file was able to be parsed into an AST.
+        end_line = end_line_from_indent(method_node:, lines:) if end_line >= lines.count
 
         Source.new(file_path: file_proxy.file_path, scope: method_node.name, lines:, start_line:, end_line:, location: method_node.location)
       end

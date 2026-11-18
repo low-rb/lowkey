@@ -7,7 +7,8 @@ module Lowkey
   { AdapterLoader: 'adapters/adapter_loader', SinatraAdapter: 'adapters/sinatra_adapter',
     ProxyFactory: 'factories/proxy_factory', SourceFactory: 'factories/source_factory', Adapter: 'interfaces/adapter',
     Proxy: 'interfaces/proxy', ReleasableNode: 'interfaces/releasable_node', ReleasedNodeError: 'interfaces/releasable_node',
-    ParentMap: 'maps/parent_map', Source: 'models/source', WriteError: 'models/source', BodyProxy: 'proxies/body_proxy',
+    ParentMap: 'maps/parent_map', MaskedSource: 'models/masked_source',
+    Source: 'models/source', WriteError: 'models/source', BodyProxy: 'proxies/body_proxy',
     ClassProxy: 'proxies/class_proxy', FileProxy: 'proxies/file_proxy', MethodCallProxy: 'proxies/method_call_proxy',
     MethodProxy: 'proxies/method_proxy', ModuleProxy: 'proxies/module_proxy', ParamProxy: 'proxies/param_proxy',
     ReturnProxy: 'proxies/return_proxy', Query: 'queries/query' }.each { |name, path| autoload(name, File.join(__dir__, path)) }
@@ -28,9 +29,8 @@ module Lowkey
 
     def load(file_path, cache: true, release_nodes: config.release_nodes)
       load_prism
-      result = Prism.parse(File.read(file_path), filepath: file_path)
-      root_node = result.value
-      file_proxy = ProxyFactory.file_proxy(result:, file_path:)
+      root_node, lines = parse(file_path)
+      file_proxy = ProxyFactory.file_proxy(root_node:, file_path:, lines:)
 
       parent_map = ParentMap.new(root_node:)
       visitor = Visitor.new(file_proxy:, parent_map:)
@@ -45,6 +45,19 @@ module Lowkey
 
       file_proxy.release_nodes if release_nodes
       file_proxy
+    end
+
+    # Parses a file, and parses it again with the methods Prism couldn't parse masked, like an RBX file's templates, as
+    # Prism's guesses at where they end can run on through the rest of the file. Returns the file's own lines too.
+    def parse(file_path)
+      source = File.read(file_path)
+      result = Prism.parse(source, filepath: file_path)
+      unless result.errors.empty?
+        masked = MaskedSource.new(source:, error_lines: result.errors.map { it.location.start_line }).to_s
+        result = Prism.parse(masked, filepath: file_path)
+      end
+
+      [result.value, source.lines]
     end
 
     # Prism takes a while to load, so it's loaded when a file or value is first parsed rather than with Lowkey.

@@ -3,7 +3,7 @@
 module Lowkey
   class TemplateBeforeMethod
     def render(event:)
-      <div>{@link}</div>
+      <div>{@link} — {"crème"} {</div>
     end
 
     private
