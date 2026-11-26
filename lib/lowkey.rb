@@ -49,8 +49,10 @@ module Lowkey
 
     # Parses a file, and parses it again with the methods Prism couldn't parse masked, like an RBX file's templates, as
     # Prism's guesses at where they end can run on through the rest of the file. Returns the file's own lines too.
+    # The file is read as UTF-8, as Ruby reads source files, rather than in the locale's encoding, which is US-ASCII on
+    # build servers without a UTF-8 locale.
     def parse(file_path)
-      source = File.read(file_path)
+      source = File.read(file_path, encoding: Encoding::UTF_8)
       result = Prism.parse(source, filepath: file_path)
       unless result.errors.empty?
         masked = MaskedSource.new(source:, error_lines: result.errors.map { it.location.start_line }).to_s
